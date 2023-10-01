@@ -22,7 +22,6 @@
     - User.Read.All
     - AuditLog.Read.All
     - Group.ReadWrite.All
-    - Mail.ReadWrite
     - Mail.Send
 
  The script requires the following modules:
