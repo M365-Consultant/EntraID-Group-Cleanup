@@ -1,3 +1,5 @@
+*** WORK IN PROGRESS ***
+
 # EntraID-Group-Cleanup
 This script is designed for an Azure Runbook to automatically remove users from an EntraID (AzureAD) group, based on the time of membership.
 Please note that this script relies on the Audit Log to retrieve the timestamp of a user's addition to a group. As a result, the maximum timeframe available is determined by the retention period set for your Audit Log!
@@ -9,7 +11,6 @@ The managed identity requires the following Graph Permissions:
    - User.Read.All
    - AuditLog.Read.All
    - Group.ReadWrite.All
-   - Mail.ReadWrite
    - Mail.Send
 
 The script requires the following modules:
