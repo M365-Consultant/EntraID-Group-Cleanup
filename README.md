@@ -31,3 +31,9 @@ There are a few parameters which must be set for a job run:
    - $mailSender -> The mail-alias from which the mail will be send (can be a user-account or a shared-mailbox)
    - $mailRecipients -> The recpient(s) of a mail. If you want more than one recpient, you can seperate them with ;
 
+# Changelog
+- v0.2 Email-Reporting optimization
+  - Multiple optimizations on the e-mail content.
+  - Fixed false naming in the description
+- v0.1 First release
+  - First release of this script
