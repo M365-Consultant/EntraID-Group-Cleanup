@@ -1,5 +1,5 @@
 <#PSScriptInfo
-.VERSION 0.1
+.VERSION 0.2
 .GUID f5d6e7f2-9d1e-4d7b-9a4f-2f1b1c3d0c6a
 .AUTHOR Dominik Gilgen
 .COMPANYNAME Dominik Gilgen (Personal)
@@ -10,10 +10,11 @@
 #>
 
 <# 
+
 .DESCRIPTION 
- Azure Runbook - Dynamic Group - MFA State
+ Azure Runbook - Group Cleanup
  
- This script is designed for an Azure Runbook to automatically remove users from an EntraID (AzureAD) group, based on the time of membership (max.30 days).
+ This script is designed for an Azure Runbook to automatically remove users from an EntraID (AzureAD) group, based on the time of membership (by default max.30 days).
  Please note that this script relies on the Audit Log to retrieve the timestamp of a user's addition to a group. As a result, the maximum timeframe available is determined by the retention period set for your Audit Log!
 
  Before running the runbook, you need to set up an automation account with a managed identity.
@@ -41,6 +42,8 @@
         'disabled' - never send a mail
     - $mailSender -> The mail-alias from which the mail will be send (can be a user-account or a shared-mailbox)
     - $mailRecipients -> The recpient(s) of a mail. If you want more than one recpient, you can seperate them with ;
+
+
 #> 
 
 
@@ -58,21 +61,21 @@ Param
   [String] $mailRecipients
 )
 
-#Connect to Microsoft Graph within Azure Automation
+#Connect to Microsoft Graph using a Managed Identity
 Connect-MgGraph -Identity
 
 
-#Setting variables
+#Preparing necessary variables
 $timeNow = (Get-Date).ToUniversalTime()
 $groupMembers = Get-MgGroupMember -GroupId $groupID -All
 $groupName = Get-MgGroup -GroupId $groupID
 $filterAction = "activityDisplayName eq 'Add member to group'" 
 $filterGroup = "targetResources/any(t:t/Id eq '"+$groupID+"')"
 
-#Mail content
-$mailContent = "<p style='font-weight:bold'>The Azure runbook for removing users from the group '" +$groupName.DisplayName+ "' has been executed.</p><br>"
-$mailContentRemoved = "<p style='color: orange'>Those users has been removed from the group:</p>"
-$mailContentNothing = "<br><p style='color: green'>Those users will remain in the group:</p>"
+#Preparing mail content
+$mailContentHeader = "<p style='font-weight:bold'>The Azure runbook for removing users from the group '" +$groupName.DisplayName+ "' has been executed.</p><br>"
+$mailContentRemoved = "<p style='color: orange'>Those users has been removed from the group:</p><ul>"
+$mailContentKeep = "<br><br><p style='color: green'>Those users will remain in the group:</p><ul>"
 
 
 #Check group membership and remove users who have exceeded the cleanup time
@@ -86,30 +89,44 @@ foreach ($user in $groupMembers) {
         if ($timeDiff.TotalMinutes-gt $timeCleanup){
             $output = "Remove User: " + $userdetail.UserPrincipalName
             Write-Output $output
-            $mailContentRemoved += $userdetail.UserPrincipalName + "<br>"
+            $mailContentRemoved += "<li>" + $userdetail.UserPrincipalName + "</li>"
             Remove-MgGroupMemberByRef -GroupId $groupID -DirectoryObjectId $user.Id
         }
         else {
             $remaining = $timeCleanup - ([math]::round($timeDiff.TotalMinutes,0))
             $output = "Keep User: " + $userdetail.UserPrincipalName + " (" + $remaining +" min. remaining)"
             Write-Output $output
-            $mailContentNothing += $userdetail.UserPrincipalName + " (" + $remaining +" min. remaining)<br>"
+            $mailContentKeep += "<li>" + $userdetail.UserPrincipalName + " (" + $remaining +" min. remaining)</li>"
         }
     }
     else{
         $warningNoentryfound = "No audit-log entry found for "+$userdetail.UserPrincipalName
         Write-Warning $warningNoentryfound
-        $mailContent += "<p style='color: red'>" + $warningNoentryfound + "</p><br>"
+        $mailContentWarning += "<p style='color: red'>WARNING: " + $warningNoentryfound + "</p><br>"
     }
 }
+
+if ($mailContentRemoved -eq "<p style='color: orange'>Those users has been removed from the group:</p><ul>"){
+    $mailContentRemoved = "<p style='color: orange'>Those users has been removed from the group:</p><b>No users removed.</b>"
+    Write-Output "No users removed."
+}
+else { $mailContentRemoved += "</ul>" }
+
+if ($mailContentKeep -eq "<br><br><p style='color: green'>Those users will remain in the group:</p><ul>"){
+    $mailContentKeep = "<br><p style='color: green'>Those users will remain in the group:</p><br><b>No users to keep.</b><br>"
+    Write-Output "No users to keep."
+}
+else { $mailContentKeep += "</ul>" }
+
 
 
 # Sendmail
 function runbookSendMail {
     $mailRecipientsArray = $mailRecipients.Split(";")
     $mailSubject = "Azure Runbook Report: Group Cleanup (" + $groupName.DisplayName + ")"
-    $mailContent += $mailContentRemoved + $mailContentNothing
-    $mailContent += "<br><br><p style='color: grey'>You can find additional details in the job history of this runbook.<br>Job finished at (UTC) " + (Get-Date).ToUniversalTime() + "<br>Job ID:"+ $PSPrivateMetadata.JobId.Guid + "</p>"
+    $mailContentFooter += "<br><br><p style='color: grey'>You can find additional details in the job history of this runbook.<br>Job finished at (UTC) " + (Get-Date).ToUniversalTime() + "<br>Job ID:"+ $PSPrivateMetadata.JobId.Guid + "</p>"
+    $mailContent += $mailContentHeader + $mailContentWarning + $mailContentRemoved + $mailContentKeep + $mailContentFooter
+   
 
     $params = @{
             Message = @{
