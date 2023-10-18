@@ -22,14 +22,19 @@ The script requires the following modules:
 
 # Parameters
 There are a few parameters which must be set for a job run:
-   - $groupID -> The Object-ID of a EntraID (AzureAD) group)
-   - $timeCleanup -> The time in MINUTES, for how long a user should remain in the group (maximum is your Audit-Log retention!)
-   - $mailMode -> This is controlling the mail behavior (enter the mode you want without ' )
-      'always' - sends a mail on every run
-      'removal' - sends a mail only if a user has been removed from a group
-      'disabled' - never send a mail
-   - $mailSender -> The mail-alias from which the mail will be send (can be a user-account or a shared-mailbox)
-   - $mailRecipients -> The recpient(s) of a mail. If you want more than one recpient, you can seperate them with ;
+- $groupid_capable
+  - The Object-ID of a EntraID (AzureAD) group
+- $timeCleanup 
+  - The time in MINUTES, for how long a user should remain in the group (maximum is your Audit-Log retention!)
+- $mailMode -> This controls the mail behavior. Enter the mode you want without using '
+  - 'always' - sends a mail on every run
+  - 'changes' - sends a mail only if a user has been removed from a group
+  - 'disabled' - never send a mail
+- $mailSender
+  - The mail-alias from which the mail will be send (can be a user-account or a shared-mailbox)
+- $mailRecipients
+  - The recipient(s) of the mail (internal or external). If you want more than one recipient, you can separate them with the character ; in between.
+
 
 # Changelog
 - v0.2 Email-Reporting optimization
