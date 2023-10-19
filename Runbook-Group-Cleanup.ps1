@@ -1,5 +1,5 @@
 <#PSScriptInfo
-.VERSION 0.2
+.VERSION 0.2b
 .GUID f5d6e7f2-9d1e-4d7b-9a4f-2f1b1c3d0c6a
 .AUTHOR Dominik Gilgen
 .COMPANYNAME Dominik Gilgen (Personal)
@@ -93,10 +93,11 @@ foreach ($user in $groupMembers) {
             Remove-MgGroupMemberByRef -GroupId $groupID -DirectoryObjectId $user.Id
         }
         else {
-            $remaining = $timeCleanup - ([math]::round($timeDiff.TotalMinutes,0))
-            $output = "Keep User: " + $userdetail.UserPrincipalName + " (" + $remaining +" min. remaining)"
+            $remainingMinutes = $timeCleanup - ([math]::round($timeDiff.TotalMinutes,0))
+            $remainingHours = $timeCleanup / 60 - ([math]::round($timeDiff.TotalHours,2))
+            $output = "Keep User: " + $userdetail.UserPrincipalName + " (" + $remainingHours + " h [" + $remainingMinutes + " min.] remaining)"
             Write-Output $output
-            $mailContentKeep += "<li>" + $userdetail.UserPrincipalName + " (" + $remaining +" min. remaining)</li>"
+            $mailContentKeep += "<li>" + $userdetail.UserPrincipalName + " (" + $remainingHours + " h remaining | <span style='font-style:italic;color:grey'>[" + $remainingMinutes + " min.] </span>)</li>"
         }
     }
     else{
@@ -113,7 +114,7 @@ if ($mailContentRemoved -eq "<p style='color: orange'>Those users has been remov
 else { $mailContentRemoved += "</ul>" }
 
 if ($mailContentKeep -eq "<br><br><p style='color: green'>Those users will remain in the group:</p><ul>"){
-    $mailContentKeep = "<br><p style='color: green'>Those users will remain in the group:</p><br><b>No users to keep.</b><br>"
+    $mailContentKeep = "<br><br><p style='color: green'>Those users will remain in the group:</p><b>No users to keep.</b><br>"
     Write-Output "No users to keep."
 }
 else { $mailContentKeep += "</ul>" }
