@@ -37,6 +37,7 @@ There are a few parameters which must be set for a job run:
 
 
 # Changelog
+- v0.2b Small changes on the Email-Reporting
 - v0.2 Email-Reporting optimization
   - Multiple optimizations on the e-mail content.
   - Fixed false naming in the description
