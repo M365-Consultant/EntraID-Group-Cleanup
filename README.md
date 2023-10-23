@@ -28,7 +28,8 @@ There are a few parameters which must be set for a job run:
   - The time in MINUTES, for how long a user should remain in the group (maximum is your Audit-Log retention!)
 - $mailMode -> This controls the mail behavior. Enter the mode you want without using '
   - 'always' - sends a mail on every run
-  - 'changes' - sends a mail only if a user has been removed from a group
+  - 'removal' - sends a mail only if a user has been removed from the group
+  - 'members' - sends a mail aslong as there are members in the group
   - 'disabled' - never send a mail
 - $mailSender
   - The mail-alias from which the mail will be send (can be a user-account or a shared-mailbox)
@@ -37,6 +38,7 @@ There are a few parameters which must be set for a job run:
 
 
 # Changelog
+- v0.3 Fixed the error with the mail-mode "removal" and implemented the option "members" (see description)
 - v0.2b Small changes on the Email-Reporting
 - v0.2 Email-Reporting optimization
   - Multiple optimizations on the e-mail content.
