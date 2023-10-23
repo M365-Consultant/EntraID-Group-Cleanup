@@ -1,5 +1,5 @@
 <#PSScriptInfo
-.VERSION 0.2b
+.VERSION 0.3
 .GUID f5d6e7f2-9d1e-4d7b-9a4f-2f1b1c3d0c6a
 .AUTHOR Dominik Gilgen
 .COMPANYNAME Dominik Gilgen (Personal)
@@ -7,6 +7,8 @@
 .LICENSEURI https://github.com/M365-Consultant/EntraID-Group-Cleanup/blob/main/LICENSE
 .PROJECTURI https://github.com/M365-Consultant/EntraID-Group-Cleanup/
 .EXTERNALMODULEDEPENDENCIES Microsoft.Graph.Authentication,Microsoft.Graph.Groups,Microsoft.Graph.Reports,Microsoft.Graph.Users,Microsoft.Graph.Users.Actions
+.RELEASENOTES
+Fixed the error with the mail-mode "removal" and implemented the option "members" (see description)
 #>
 
 <# 
@@ -38,7 +40,8 @@
     - $timeCleanup -> The time in MINUTES, for how long a user should remain in the group (maximum is your Audit-Log retention!)
     - $mailMode -> This is controlling the mail behavior (enter the mode you want without ' )
         'always' - sends a mail on every run
-        'removal' - sends a mail only if a user has been removed from a group
+        'removal' - sends a mail only if a user has been removed from the group
+        'members' - sends a mail aslong as there are members in the group
         'disabled' - never send a mail
     - $mailSender -> The mail-alias from which the mail will be send (can be a user-account or a shared-mailbox)
     - $mailRecipients -> The recpient(s) of a mail. If you want more than one recpient, you can seperate them with ;
@@ -154,8 +157,10 @@ function runbookSendMail {
 }
 
 if ($mailMode -eq "always" -and $mailSender -and $mailRecipients) { runbookSendMail }
-elseif ($mailMode -eq "removal" -and $mailSender -and $mailRecipients -and $groupMembers) { runbookSendMail }
-elseif ($mailMode -eq "removal" -and $mailSender -and $mailRecipients) { Write-Output "No mail sent, because there are no members in the group to handel and mailmode is set to removal." }
+elseif ($mailMode -eq "removal" -and $mailSender -and $mailRecipients -and $mailContentRemoved -ne "<p style='color: orange'>Those users has been removed from the group:</p><b>No users removed.</b>") { runbookSendMail }
+elseif ($mailMode -eq "removal" -and $mailSender -and $mailRecipients) { Write-Output "No mail sent, because there was no removals and mailmode is set to 'removal'." }
+elseif ($mailMode -eq "members" -and $mailSender -and $mailRecipients -and $groupMembers) { runbookSendMail }
+elseif ($mailMode -eq "members" -and $mailSender -and $mailRecipients) { Write-Output "No mail sent, because there are no members in the group to handel and mailmode is set to 'members'." }
 elseif ($mailMode -eq "disabled"){ Write-Output "Mail function is disabled." }
 else { Write-Warning "Mail settings are missing or incorrect" }
 
